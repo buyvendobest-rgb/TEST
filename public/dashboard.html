@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Work Dashboard</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js CDN for charts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            transition: all 0.3s ease-in-out;
+        }
+        /* The sidebar's transition now applies to its width and padding */
+        .sidebar {
+            transition: width 0.3s ease-in-out, padding 0.3s ease-in-out;
+        }
+        .sidebar-hidden {
+            width: 0 !important;
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+            overflow: hidden;
+        }
+        .main-content {
+            transition: all 0.3s ease-in-out;
+            flex: 1;
+            overflow-y: auto;
+        }
+        /* The page content inside the main area is centered with auto margins */
+        .page-content {
+            width: 100%;
+            max-width: 1200px;
+            margin-left: auto;
+            margin-right: auto;
+            padding: 2rem;
+        }
+        /* Adjusted styling for table cells for better readability */
+        table td, table th {
+            min-width: 80px; /* Ensure a minimum width for cells */
+            word-break: break-word; /* Allow long words to break and wrap */
+            vertical-align: top; /* Align content to the top for multi-line cells */
+        }
+        /* Overlay for access denied message */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .overlay-content {
+            background: white;
+            padding: 3rem;
+            border-radius: 1rem;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            max-width: 500px;
+            color: #333;
+        }
+    </style>
+    
+    <!-- Client-side check for authentication (kept as requested, but without imports) -->
+    <!-- This check is for an early redirect if NO token is found, before Firebase fully initializes. -->
+    <!-- It should NOT contain module imports. -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const accessToken = localStorage.getItem('supabase.auth.token'); 
+            const firebaseCustomToken = localStorage.getItem('firebase.custom.token');
+
+            // If neither token exists, redirect to login immediately.
+            // Firebase Auth will handle more nuanced token validation later.
+            if (!accessToken && !firebaseCustomToken) {
+                window.location.href = '/login.html';
+            }
+        });
+    </script>
+</head>
+<body class="bg-gray-100 flex h-screen">
+
+    <!-- Sidebar will be loaded here dynamically -->
+    <div id="sidebar-container"></div>
+
+    <!-- Main Content Area -->
+    <div id="main-content" class="main-content">
+        <!-- Main content is now inside this container which is centered by default -->
+        <div class="page-content">
+            <!-- Header with Toggle Button and Sign Out Button -->
+            <header class="flex items-center justify-between mb-8">
+                <button id="sidebar-toggle-btn" class="p-2 rounded-lg bg-gray-800 text-white hover:bg-gray-700 transition duration-200">
+                    <svg id="toggle-icon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                    </svg>
+                </button>
+                <h1 id="main-title" class="text-3xl font-extrabold text-gray-800">Dashboard</h1>
+                
+                <!-- Sign Out Button -->
+                <button id="signOutBtn" class="flex items-center space-x-2 py-2 px-4 rounded-lg bg-red-600 text-white hover:bg-red-700 transition duration-200">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
+                    <span>Sign Out</span>
+                </button>
+
+            </header>
+            
+            <!-- Dashboard Content -->
+            <div id="dashboard-page" class="page">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="bg-white p-6 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300">
+                        <h2 class="text-xl font-bold text-gray-700 mb-2">Total Quantity Encoded</h2>
+                        <p id="totalEncodedItems" class="text-4xl font-extrabold text-indigo-600">0</p>
+                        <p class="text-gray-500 mt-2">Sum of QTY across all marketplaces</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300">
+                        <h2 class="text-xl font-bold text-gray-700 mb-2">Current Day Successes</h2>
+                        <p id="currentDaySuccesses" class="text-4xl font-extrabold text-green-500">0</p>
+                        <p class="text-gray-500 mt-2">Entries marked 'SUCCESS' today</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300">
+                        <h2 class="text-xl font-bold text-gray-700 mb-2">Current Day Failures</h2>
+                        <p id="currentDayFailures" class="text-4xl font-extrabold text-red-500">0</p>
+                        <p class="text-gray-500 mt-2">Entries marked 'FAILED' today</p>
+                    </div>
+
+                    <!-- Chart Section -->
+                    <div class="lg:col-span-3 bg-white p-6 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300">
+                        <h2 class="text-xl font-bold text-gray-700 mb-4">Encoded Entries by Marketplace</h2>
+                        <div class="relative h-96">
+                            <canvas id="marketplaceChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Recent Encoded Items Table -->
+                    <div class="lg:col-span-3 bg-white p-6 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300">
+                        <h2 class="text-xl font-bold text-gray-700 mb-4">Recently Encoded Items</h2>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <!-- Headers for the combined sheet's simplified view -->
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Courier</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">QTY</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order ID</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Remarks</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Marketplace</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="recentEncodedItemsTableBody" class="bg-white divide-y divide-gray-200">
+                                    <!-- Recent encoded items will be loaded here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        // TEMPORARY: Log the __app_id to the console
+        // Keep this for now to confirm your appId, then remove it once you have the ID.
+        console.log("Canvas App ID:", typeof __app_id !== 'undefined' ? __app_id : 'default-app-id-not-found');
+
+        // ==== CORRECT IMPORTS: All imports must be within a script with type="module" ====
+        import { initializeFirebaseAndAuth, checkPageAccess, signOutUser, openDriveFolder, userId } from '../js/auth-rbac.js';
+        import { loadSidebar } from '../js/sidebar-loader.js'; // Corrected path: `../js/` because dashboard.html is in `public/` and js/ is in `public/`
+        // =================================================================================
+
+        const PAGE_CATEGORY = 'dashboard'; 
+        const DRIVE_URL = 'https://drive.google.com/drive/folders/YOUR_DASHBOARD_DRIVE_FOLDER_ID'; // Replace with actual URL if applicable
+
+        // --- Utility Functions for Custom Messages ---
+        // This showMessage is specific to this page if needed, otherwise it can be moved to auth-rbac.js
+        function showMessage(type, message) {
+            const existingMessageBox = document.querySelector('.message-box');
+            if (existingMessageBox) {
+                existingMessageBox.remove();
+            }
+
+            const messageBox = document.createElement('div');
+            // Tailwind classes for message box
+            messageBox.classList.add('message-box', 'fixed', 'top-4', 'right-4', 'p-4', 'rounded-lg', 'shadow-lg', 'text-white', 'z-50', 'flex', 'items-center', 'space-x-3');
+            
+            if (type === 'success') {
+                messageBox.classList.add('bg-green-500');
+            } else if (type === 'error') {
+                messageBox.classList.add('bg-red-500');
+            } else {
+                messageBox.classList.add('bg-gray-700'); // Default
+            }
+
+            messageBox.innerHTML = `
+                <strong class="font-bold">${type === 'success' ? 'Success!' : 'Error!'}</strong>
+                <span class="block sm:inline">${message}</span>
+                <button class="ml-auto text-white opacity-75 hover:opacity-100" onclick="this.parentElement.remove()">
+                    <svg class="fill-current h-4 w-4" role="button" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><title>Close</title><path d="M14.348 14.849a1.2 1.2 0 0 1-1.697 0L10 11.819l-2.651 3.029a1.2 1.2 0 1 1-1.697-1.697l2.758-3.15-2.759-3.15a1.2 1.2 0 1 1 1.697-1.697L10 8.183l2.651-3.03a1.2 1.2 0 1 1 1.697 1.697l-2.758 3.15 2.758 3.15a1.2 1.2 0 0 1 0 1.698z"/></svg>
+                </button>
+            `;
+            document.body.appendChild(messageBox);
+
+            setTimeout(() => {
+                if (messageBox.parentElement) {
+                    messageBox.remove();
+                }
+            }, 3000); // Message disappears after 3 seconds
+        }
+
+        // Helper to get Supabase token for authorization (Still needed for API calls)
+        function getAuthToken() {
+            const token = localStorage.getItem('supabase.auth.token');
+            return token ? `Bearer ${token}` : '';
+        }
+
+        // This function now fetches ALL data from a single 'combined-get-data' endpoint
+        async function getEncodedItemsCombined() {
+            const authToken = getAuthToken();
+            if (!authToken) {
+                showMessage('error', 'Authentication token missing. Please log in again.');
+                window.location.href = '/login.html'; // Redirect to login
+                return { success: false, message: 'Authentication required.' };
+            }
+
+            try {
+                const response = await fetch(`/api/combined-get-data`, {
+                    headers: { 'Authorization': authToken }
+                });
+                const result = await response.json();
+                if (!response.ok) {
+                    throw new Error(result.message || `Failed to fetch data from combined sheet.`);
+                }
+
+                // Define the comprehensive headers as they appear in the spreadsheet
+                const comprehensiveHeaders = [
+                    "Date", "Courier", "QTY", "Description", "Order ID", "Remarks", "Marketplace"
+                ];
+
+                // --- NEW FILTERING LOGIC ON RAW DATA (BEFORE MAPPING) ---
+                const rawData = result.data || [];
+                const rawFilteredData = rawData.filter(row => {
+                    // Ensure the row is an array and has at least some content to be considered for filtering
+                    if (!Array.isArray(row) || row.length === 0) {
+                        return false;
+                    }
+
+                    // Rule 1: Not a blank row (all cells are empty strings or undefined/null)
+                    // Check if every cell is empty (empty string, null, or undefined)
+                    const isBlankRow = row.every(cell => 
+                        (typeof cell === 'string' && cell.trim() === '') || 
+                        cell === undefined || cell === null
+                    );
+                    if (isBlankRow) return false;
+
+                    // Rule 2: Not the main header row (e.g., "Date", "Courier", "QTY"...)
+                    // Compare the raw row directly against the comprehensiveHeaders array
+                    const isMainHeaderRow = row.length === comprehensiveHeaders.length && 
+                                            row.every((cell, index) => cell === comprehensiveHeaders[index]);
+                    if (isMainHeaderRow) return false;
+
+                    // Rule 3: Not a day header row (e.g., "Friday, August 8, 2025")
+                    // A day header row typically has only the first cell populated with a date-like string
+                    // and the rest are empty or undefined.
+                    const isDayHeaderRow = (row.length > 0 && 
+                                            (new Date(row[0]).toString() !== 'Invalid Date') &&
+                                            (row[0] && typeof row[0] === 'string' && row[0].includes(',')) && // Heuristic: day headers usually contain a comma for day of week
+                                            row.slice(1).every(cell => typeof cell === 'string' ? cell.trim() === '' : cell === undefined || cell === null));
+                    if (isDayHeaderRow) return false;
+
+                    // If it passed all header/blank checks, it's considered a valid data row.
+                    // Also, ensure it has at least one meaningful piece of data (beyond empty strings or 0 for qty)
+                    const hasMeaningfulData = row.some(cell => 
+                        (typeof cell === 'string' && cell.trim() !== '') || 
+                        (typeof cell === 'number' && cell !== 0) || // Check if number is not 0 for qty, if it's not 0 or empty string.
+                        (cell !== undefined && cell !== null && (typeof cell !== 'string' && typeof cell !== 'number')) // Catches other non-empty types
+                    );
+                    
+                    return hasMeaningfulData;
+                });
+                // --- END NEW FILTERING LOGIC ON RAW DATA ---
+
+                // Now map the filtered raw data into structured item objects
+                const mappedData = rawFilteredData.map(row => ({
+                    date: row[0] || '',
+                    courier: row[1] || '',
+                    qty: parseInt(row[2]) || 0, // Now this conversion happens AFTER filtering headers
+                    description: row[3] || '',
+                    orderId: row[4] || '',
+                    remarks: row[5] || '',
+                    marketplace: row[6] || '',
+                }));
+
+                return { success: true, data: mappedData };
+            } catch (error) {
+                console.error(`Error fetching data from combined sheet:`, error);
+                return { success: false, message: error.message || `Failed to fetch data for dashboard.` };
+            }
+        }
+
+        let marketplaceChart; // Declare chart variable globally
+
+        async function updateDashboardData() {
+            const result = await getEncodedItemsCombined(); // Fetch all data from combined sheet
+            let allEncodedItems = [];
+            let totalQuantityEncoded = 0;
+            let currentDaySuccesses = 0; // Renamed for clarity with new IDs
+            let currentDayFailures = 0;  // Renamed for clarity with new IDs
+            const marketplaceCounts = { 'shopee': 0, 'tiktok': 0, 'lazada': 0 }; // Initialize for charting
+
+            if (result.success && result.data) {
+                allEncodedItems = result.data;
+
+                // Get today's date formatted for comparison (e.g., "8/8/2025")
+                // Use a precise format that matches the spreadsheet's date output for comparison
+                const todayForComparison = new Date();
+                const todayFormattedForComparison = todayForComparison.toLocaleDateString('en-US', { 
+                    timeZone: 'Asia/Manila', 
+                    year: 'numeric', month: '2-digit', day: '2-digit' 
+                }); 
+
+
+                allEncodedItems.forEach(item => {
+                    const itemQuantity = typeof item.qty === 'number' && !isNaN(item.qty) ? item.qty : 0;
+                    totalQuantityEncoded += itemQuantity; 
+
+                    // Increment count for the specific marketplace for charting (counting entries, not qty)
+                    const marketKey = (item.marketplace || '').toLowerCase(); // Ensure marketplace is string before toLowerCase
+                    if (marketplaceCounts.hasOwnProperty(marketKey)) {
+                        marketplaceCounts[marketKey] += 1; 
+                    }
+
+                    // New: Check remarks for current day (using the date part only)
+                    const itemDate = new Date(item.date);
+                    // Ensure itemDate is valid and compare only the date part with today's date
+                    const itemDateFormattedForComparison = !isNaN(itemDate.getTime()) ? 
+                                                            itemDate.toLocaleDateString('en-US', { 
+                                                                timeZone: 'Asia/Manila', 
+                                                                year: 'numeric', month: '2-digit', day: '2-digit'
+                                                            }) : ''; 
+                    
+                    if (itemDateFormattedForComparison === todayFormattedForComparison) {
+                        const remarksUpper = (item.remarks || '').toUpperCase();
+                        if (remarksUpper.includes('SUCCESS')) {
+                            currentDaySuccesses++;
+                        } else if (remarksUpper.includes('FAILED')) {
+                            currentDayFailures++;
+                        }
+                    }
+                });
+            }
+
+            // Update summary cards with new IDs
+            document.getElementById('totalEncodedItems').textContent = totalQuantityEncoded;
+            document.getElementById('currentDaySuccesses').textContent = currentDaySuccesses;
+            document.getElementById('currentDayFailures').textContent = currentDayFailures;
+
+
+            // Sort allEncodedItems by date (most recent first)
+            allEncodedItems.sort((a, b) => {
+                const dateA = new Date(a.date);
+                const dateB = new Date(b.date);
+                if (isNaN(dateA.getTime())) return 1; 
+                if (isNaN(dateB.getTime())) return -1; 
+                return dateB.getTime() - dateA.getTime();
+            });
+
+            // Populate recent encoded items table
+            const recentItemsTableBody = document.getElementById('recentEncodedItemsTableBody');
+            recentItemsTableBody.innerHTML = ''; // Clear existing data
+            const itemsToShow = allEncodedItems.slice(0, 10); // Show top 10 recent items
+
+            itemsToShow.forEach(item => {
+                const newRow = recentItemsTableBody.insertRow();
+                newRow.classList.add('hover:bg-gray-100'); 
+
+                const dateCell = newRow.insertCell();
+                dateCell.classList.add('px-6', 'py-4', 'text-sm', 'text-gray-500'); 
+                dateCell.textContent = item.date || 'N/A';
+                
+                const courierCell = newRow.insertCell();
+                courierCell.classList.add('px-6', 'py-4', 'text-sm', 'font-medium', 'text-gray-900'); 
+                courierCell.textContent = item.courier || 'N/A';
+
+                const qtyCell = newRow.insertCell();
+                qtyCell.classList.add('px-6', 'py-4', 'text-sm', 'text-gray-500'); 
+                qtyCell.textContent = (typeof item.qty === 'number' && !isNaN(item.qty) ? item.qty : 'N/A');
+
+                const descriptionCell = newRow.insertCell();
+                descriptionCell.classList.add('px-6', 'py-4', 'text-sm', 'text-gray-500'); 
+                descriptionCell.textContent = item.description || 'N/A';
+
+                const orderIdCell = newRow.insertCell();
+                orderIdCell.classList.add('px-6', 'py-4', 'text-sm', 'text-gray-500'); 
+                orderIdCell.textContent = item.orderId || 'N/A';
+
+                const remarksCell = newRow.insertCell();
+                remarksCell.classList.add('px-6', 'py-4', 'text-sm', 'text-gray-500'); 
+                remarksCell.textContent = item.remarks || 'N/A';
+
+                const marketplaceCell = newRow.insertCell(); 
+                marketplaceCell.classList.add('px-6', 'py-4', 'text-sm', 'font-semibold', 'text-indigo-600', 'capitalize'); 
+                marketplaceCell.textContent = item.marketplace || 'N/A';
+            });
+
+            // Update Chart
+            const ctx = document.getElementById('marketplaceChart').getContext('2d');
+            const labels = Object.keys(marketplaceCounts).map(m => m.charAt(0).toUpperCase() + m.slice(1));
+            const data = Object.values(marketplaceCounts);
+
+            if (marketplaceChart) {
+                marketplaceChart.data.labels = labels;
+                marketplaceChart.data.datasets[0].data = data;
+                marketplaceChart.update();
+            } else {
+                marketplaceChart = new Chart(ctx, {
+                    type: 'bar', // You can change this to 'pie', 'line', etc.
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Number of Encoded Entries', // Label for chart
+                            data: data,
+                            backgroundColor: [
+                                'rgba(79, 70, 229, 0.7)', // Indigo
+                                'rgba(234, 179, 8, 0.7)',  // Yellow
+                                'rgba(16, 185, 129, 0.7)'  // Green
+                            ],
+                            borderColor: [
+                                'rgba(79, 70, 229, 1)',
+                                'rgba(234, 179, 8, 1)',
+                                'rgba(16, 185, 129, 1)'
+                            ],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false,
+                                position: 'top',
+                            },
+                            title: {
+                                display: true,
+                                text: 'Encoded Entries Distribution', // Title for chart
+                                font: {
+                                    size: 16,
+                                    weight: 'bold'
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    precision: 0 // Ensure integer ticks for counts
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        // --- Main execution flow ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize Firebase Auth and RBAC logic FIRST
+            initializeFirebaseAndAuth();
+
+            // Wait for authentication and permissions to be ready
+            document.addEventListener('authReady', (event) => {
+                const { userPermissions, isAdminUser } = event.detail;
+
+                // 1. Check access for THIS page
+                checkPageAccess(PAGE_CATEGORY);
+
+                // 2. Load sidebar with permissions (this hides/shows nav links)
+                loadSidebar(userPermissions, isAdminUser); 
+
+                // 3. Load page-specific data ONLY if access is granted (or if admin)
+                // The checkPageAccess function will show an overlay if denied.
+                // We check if the overlay is NOT visible before loading data.
+                const accessDeniedOverlay = document.getElementById('accessDeniedOverlay');
+                if (!accessDeniedOverlay || accessDeniedOverlay.style.display !== 'flex') {
+                   updateDashboardData(); // Call your dashboard data update function here
+                }
+            });
+
+            // Attach event listener for Sign Out button
+            const signOutButton = document.getElementById('signOutBtn');
+            if (signOutButton) {
+                signOutButton.addEventListener('click', signOutUser);
+            }
+
+            // Attach event listener for Open Drive button (if applicable)
+            const openDriveButton = document.getElementById('openDriveBtn');
+            if (openDriveButton) {
+                // Ensure this button exists in your HTML if you want to use it
+                openDriveButton.addEventListener('click', () => openDriveFolder(DRIVE_URL));
+            }
+        });
+    </script>
+</body>
+</html>

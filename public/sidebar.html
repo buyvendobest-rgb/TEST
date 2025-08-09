@@ -1,0 +1,143 @@
+<!-- sidebar.html -->
+<div id="sidebar-inner" class="sidebar bg-gray-800 text-white w-64 p-6 flex flex-col space-y-6 rounded-r-2xl shadow-lg">
+    <!-- Sidebar Header / Logo -->
+    <div class="flex items-center space-x-2 pb-4 border-b border-gray-700">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.485 9.176 4.908 7.5 4.908c-3.155 0-5.5 1.5-5.5 4.5 0 2.5 1.5 3.5 3.5 3.5h.5c.5 0 1 .5 1 1v.5c0 1.5 1.5 2.5 3.5 2.5s3.5-1 3.5-2.5v-.5c0-.5.5-1 1-1h.5c2 0 3.5-1 3.5-3.5 0-3-2.345-4.5-5.5-4.5z" />
+        </svg>
+        <span class="text-xl font-bold">BESTBUYVENDO Dashboard</span>
+    </div>
+
+    <!-- Sidebar Navigation -->
+    <nav>
+        <ul class="space-y-2">
+            <li>
+                <!-- Added data-category="dashboard" -->
+                <a href="/dashboard.html" class="nav-link flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-700 transition duration-200" data-category="dashboard">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                    </svg>
+                    <span>Dashboard</span>
+                </a>
+            </li>
+            <li>
+                <!-- Added data-category="encoding" -->
+                <a href="/encoding.html" class="nav-link flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-700 transition duration-200" data-category="encoding">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-2.414-2.414A1 1 0 0015.586 6H7a2 2 0 00-2 2v11a2 2 0 002 2z" />
+                    </svg>
+                    <span>Encoding</span>
+                </a>
+            </li>
+            <li>
+                <!-- Production Category (Clickable Toggle) - No data-category here, it's a parent -->
+                <button class="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-700 transition duration-200 w-full text-left focus:outline-none" id="production-toggle">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                    <span>Production</span>
+                    <!-- Arrow icon for dropdown -->
+                    <svg class="w-4 h-4 ml-auto transform transition-transform duration-200" id="production-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                </button>
+                <!-- Production Submenu -->
+                <ul id="production-submenu" class="ml-6 mt-2 space-y-2 hidden">
+                    <li>
+                        <!-- Added data-category="sales" -->
+                        <a href="/Prod/sales.html" class="nav-link flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-700 transition duration-200" data-category="sales">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                            </svg>
+                            <span>Sales</span>
+                        </a>
+                    </li>
+                    <li>
+                        <!-- Added data-category="marketing" -->
+                        <a href="/Prod/marketing.html" class="nav-link flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-700 transition duration-200" data-category="marketing">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 21h7a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-2.414-2.414A1 1 0 0015.586 6H10a2 2 0 00-2 2v11a2 2 0 002 2z" />
+                            </svg>
+                            <span>Marketing</span>
+                        </a>
+                    </li>
+                    <li>
+                        <!-- Added data-category="inventory" -->
+                        <a href="/Prod/inventory.html" class="nav-link flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-700 transition duration-200" data-category="inventory">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                            </svg>
+                            <span>Inventory</span>
+                        </a>
+                    </li>
+                    <li>
+                        <!-- Added data-category="finance" -->
+                        <a href="/Prod/finance.html" class="nav-link flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-700 transition duration-200" data-category="finance">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 21h7a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-2.414-2.414A1 1 0 0015.586 6H10a2 2 0 00-2 2v11a2 2 0 002 2z" />
+                            </svg>
+                            <span>Finance</span>
+                        </a>
+                    </li>
+                </ul>
+            </li>
+            <li>
+                <!-- Added data-category="products" -->
+                <a href="/products.html" class="nav-link flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-700 transition duration-200" data-category="products">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                    </svg>
+                    <span>Products</span>
+                </a>
+            </li>
+            <li>
+                <!-- Human Resources Category (Clickable Toggle) - No data-category here -->
+                <button class="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-700 transition duration-200 w-full text-left focus:outline-none" id="hr-toggle">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                    <span>Human Resources</span>
+                    <!-- Arrow icon for dropdown -->
+                    <svg  class="w-4 h-4 ml-auto transform transition-transform duration-200"  id="hr-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                </button>
+                <!-- Human Resources Submenu -->
+                <ul id="hr-submenu" class="ml-6 mt-2 space-y-2 hidden">
+                    <li>
+                        <!-- Added data-category="hr-tracking-development" -->
+                        <a href="/hr/tracking-and-development.html" class="nav-link flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-700 transition duration-200" data-category="hr-tracking-development">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                            </svg>
+                            <span>Tracking and Development</span>
+                        </a>
+                    </li>
+                    <li>
+                        <!-- Added data-category="hr-research-development" -->
+                        <a href="/hr/research-and-development.html" class="nav-link flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-700 transition duration-200" data-category="hr-research-development">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 21h7a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-2.414-2.414A1 1 0 0015.586 6H10a2 2 0 00-2 2v11a2 2 0 002 2z" />
+                            </svg>
+                            <span>Research and Development</span>
+                        </a>
+                    </li>
+                </ul>
+            </li>
+            <li>
+                <!-- Added data-category="customer-service" -->
+                <a href="/cs/customer-service.html" class="nav-link flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-700 transition duration-200" data-category="customer-service">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                    </svg>
+                    <span>Customer Service and Tech Support</span>
+                </a>
+            </li>
+            <!-- NEW: Admin Panel Link - Only visible to admins -->
+            <li>
+                <a href="/admin-permissions.html" class="nav-link flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-700 transition duration-200" data-category="admin">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.001 12.001 0 002.92 12c0 2.887.807 5.674 2.378 8.056l7.02 2.915 7.02-2.915c1.57-2.382 2.378-5.169 2.378-8.056a12.001 12.001 0 00-3.322-8.016z" />
+                    </svg>
+                    <span>Admin Panel</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</div>

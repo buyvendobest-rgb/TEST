@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Permissions Panel</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            transition: all 0.3s ease-in-out;
+        }
+        .sidebar {
+            transition: width 0.3s ease-in-out, padding 0.3s ease-in-out;
+        }
+        .sidebar-hidden {
+            width: 0 !important;
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+            overflow: hidden;
+        }
+        .main-content {
+            transition: all 0.3s ease-in-out;
+            flex: 1;
+            overflow-y: auto;
+        }
+        .page-content {
+            width: 100%;
+            max-width: 1200px;
+            margin-left: auto;
+            margin-right: auto;
+            padding: 2rem;
+        }
+        /* Overlay for access denied message */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .overlay-content {
+            background: white;
+            padding: 3rem;
+            border-radius: 1rem;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            max-width: 500px;
+            color: #333;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 flex h-screen overflow-hidden">
+
+    <!-- Sidebar container, will be populated dynamically by sidebar-loader.js -->
+    <div id="sidebar-container"></div>
+
+    <!-- Main Content Area -->
+    <div id="main-content" class="main-content flex flex-col">
+        <div class="page-content flex-grow">
+            <!-- Header with Toggle Button and Sign Out Button -->
+            <header class="flex items-center justify-between mb-8 p-4 bg-white rounded-xl shadow-md">
+                <button id="sidebar-toggle-btn" class="p-2 rounded-full bg-indigo-600 text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 transition duration-200 ease-in-out transform hover:scale-105">
+                    <svg id="toggle-icon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                    </svg>
+                </button>
+                <h1 id="main-title" class="text-3xl font-extrabold text-gray-800 tracking-tight">Admin Permissions</h1>
+                <button id="signOutBtn" class="flex items-center space-x-2 py-2 px-4 rounded-full bg-red-600 text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 transition duration-200 ease-in-out transform hover:scale-105 shadow-lg">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
+                    <span>Sign Out</span>
+                </button>
+            </header>
+            
+            <!-- Admin Content Area -->
+            <section class="mb-8 p-6 bg-white rounded-2xl shadow-xl">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6 border-b-2 border-indigo-200 pb-2">Manage User Permissions</h2>
+                
+                <div class="mb-6 flex flex-wrap gap-4 items-center">
+                    <input type="text" id="filterUsersInput" placeholder="Filter by User ID..." class="px-4 py-2 rounded-lg border border-gray-300 focus:ring-indigo-500 focus:border-indigo-500 flex-grow">
+                    <button id="refreshUsersBtn" class="py-2 px-6 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition duration-200 shadow-md">
+                        Refresh Users
+                    </button>
+                    <!-- Search button with icon -->
+                    <button id="searchUsersBtn" class="py-2 px-6 bg-gray-600 text-white rounded-full hover:bg-gray-700 transition duration-200 shadow-md">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                        Search
+                    </button>
+                </div>
+
+                <div id="usersList" class="space-y-4">
+                    <!-- User permission cards will be loaded here -->
+                    <p class="text-gray-500 text-center py-4" id="loadingMessage">Loading user data...</p>
+                </div>
+                <p id="noUsersFound" class="text-gray-500 text-center py-4 hidden">No users found or no permissions set yet.</p>
+
+                <!-- Message Box for Save Status -->
+                <div id="messageBox" class="mt-6 p-3 rounded-lg text-sm hidden" role="alert">
+                    <span id="messageText"></span>
+                </div>
+
+            </section>
+        </div>
+    </div>
+
+    <!-- Page-specific script -->
+    <script type="module">
+        // Import necessary functions and variables from the centralized auth-rbac module
+        import { initializeFirebaseAndAuth, checkPageAccess, signOutUser, db, userId, userPermissions, isAdminUser, isAuthReady } from '../js/auth-rbac.js';
+        // Import the sidebar loader function
+        import { loadSidebar } from '../js/sidebar-loader.js'; // Corrected path
+        import { collection, query, getDocs, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+        // Define the category for THIS specific page
+        const PAGE_CATEGORY = 'admin'; 
+        // Corrected appId to match the hardcoded one in auth-rbac.js
+        const appId = 'my-bestbuyvendo-app'; 
+
+        // Define all possible categories (must match data-category in sidebar.html)
+        const ALL_CATEGORIES = [
+            'dashboard', 'encoding', 'sales', 'marketing', 'inventory', 'finance', 
+            'products', 'hr-tracking-development', 'hr-research-development', 
+            'customer-service', 'admin' // 'admin' category for the admin panel itself
+        ];
+
+        let usersData = []; // Store the fetched user data
+        let unsubscribeFromUsers = null; // To manage the Firestore real-time listener
+
+        // Function to display messages (success/error)
+        function showMessage(type, message) {
+            const messageBox = document.getElementById('messageBox');
+            const messageText = document.getElementById('messageText');
+            messageBox.classList.remove('hidden', 'bg-green-100', 'text-green-800', 'bg-red-100', 'text-red-800');
+            
+            if (type === 'success') {
+                messageBox.classList.add('bg-green-100', 'text-green-800');
+            } else if (type === 'error') {
+                messageBox.classList.add('bg-red-100', 'text-red-800');
+            }
+            messageText.textContent = message;
+            messageBox.classList.remove('hidden');
+
+            setTimeout(() => {
+                messageBox.classList.add('hidden');
+            }, 5000); // Message disappears after 5 seconds
+        }
+
+        // Function to fetch and display user permissions
+        async function fetchAndDisplayUsers(filterText = '') {
+            const usersListDiv = document.getElementById('usersList');
+            const loadingMessage = document.getElementById('loadingMessage');
+            const noUsersFound = document.getElementById('noUsersFound');
+
+            loadingMessage.classList.remove('hidden');
+            usersListDiv.innerHTML = ''; // Clear previous users
+            noUsersFound.classList.add('hidden');
+
+            if (!db) {
+                console.error("Firestore not initialized.");
+                loadingMessage.textContent = "Error: Firestore not initialized.";
+                return;
+            }
+
+            // If there's an existing listener, unsubscribe it before setting up a new one
+            if (unsubscribeFromUsers) {
+                unsubscribeFromUsers();
+                unsubscribeFromUsers = null;
+            }
+
+            const userPermissionsRef = collection(db, `artifacts/${appId}/public/data/user_permissions`);
+            const q = query(userPermissionsRef);
+
+            try {
+                // Set up a real-time listener
+                unsubscribeFromUsers = onSnapshot(q, (snapshot) => {
+                    usersData = [];
+                    snapshot.forEach((doc) => {
+                        const data = doc.data();
+                        const uid = doc.id;
+                        // Apply filter
+                        if (!filterText || uid.toLowerCase().includes(filterText.toLowerCase())) {
+                            usersData.push({ uid, ...data });
+                        }
+                    });
+                    
+                    renderUsers(usersData);
+                    loadingMessage.classList.add('hidden');
+                    if (usersData.length === 0 && !filterText) {
+                         noUsersFound.textContent = "No users found or no permissions set yet.";
+                         noUsersFound.classList.remove('hidden');
+                    } else if (usersData.length === 0 && filterText) {
+                        noUsersFound.textContent = `No users found matching "${filterText}".`;
+                        noUsersFound.classList.remove('hidden');
+                    } else {
+                        noUsersFound.classList.add('hidden');
+                    }
+                }, (error) => {
+                    console.error("Error listening to user permissions:", error);
+                    loadingMessage.textContent = "Error loading users.";
+                    showMessage('error', `Error loading users: ${error.message}`);
+                });
+
+            } catch (error) {
+                console.error("Error setting up user permissions listener:", error);
+                loadingMessage.textContent = "Error setting up user data.";
+                showMessage('error', `Error fetching users: ${error.message}`);
+            }
+        }
+
+        function renderUsers(users) {
+            const usersListDiv = document.getElementById('usersList');
+            usersListDiv.innerHTML = ''; // Clear previous cards
+
+            users.forEach(user => {
+                const userCard = document.createElement('div');
+                userCard.classList.add('bg-white', 'p-6', 'rounded-xl', 'shadow-md', 'border', 'border-gray-200', 'hover:shadow-lg', 'transition-all', 'duration-200');
+                
+                // Construct category checkboxes
+                let categoriesHtml = ALL_CATEGORIES.map(category => `
+                    <label class="inline-flex items-center mr-4 mb-2 cursor-pointer">
+                        <input type="checkbox" data-uid="${user.uid}" data-category="${category}" 
+                               class="form-checkbox h-5 w-5 text-indigo-600 rounded focus:ring-indigo-500 transition duration-150 ease-in-out"
+                               ${user.allowedCategories && user.allowedCategories.includes(category) ? 'checked' : ''}>
+                        <span class="ml-2 text-gray-700 capitalize">${category.replace(/-/g, ' ')}</span>
+                    </label>
+                `).join('');
+
+                userCard.innerHTML = `
+                    <div class="flex items-center justify-between mb-4 pb-3 border-b border-gray-200">
+                        <h3 class="text-xl font-semibold text-gray-800 break-all">User ID: <span class="text-indigo-600">${user.uid}</span></h3>
+                        <label class="inline-flex items-center cursor-pointer">
+                            <input type="checkbox" data-uid="${user.uid}" data-admin-toggle="true"
+                                   class="form-checkbox h-6 w-6 text-purple-600 rounded-full focus:ring-purple-500 transition duration-150 ease-in-out"
+                                   ${user.isAdmin ? 'checked' : ''}>
+                            <span class="ml-2 text-gray-900 font-medium">Is Admin</span>
+                        </label>
+                    </div>
+                    <div class="mb-4">
+                        <p class="font-medium text-gray-700 mb-2">Allowed Categories:</p>
+                        <div class="flex flex-wrap">
+                            ${categoriesHtml}
+                        </div>
+                    </div>
+                    <button data-uid="${user.uid}" class="save-permissions-btn w-full py-2 px-4 bg-green-600 text-white rounded-lg hover:bg-green-700 transition duration-200 shadow-md">
+                        Save Permissions
+                    </button>
+                `;
+                usersListDiv.appendChild(userCard);
+            });
+
+            // Attach event listeners for checkboxes and save buttons AFTER rendering
+            usersListDiv.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+                checkbox.addEventListener('change', handlePermissionChange);
+            });
+            usersListDiv.querySelectorAll('.save-permissions-btn').forEach(button => {
+                button.addEventListener('click', savePermissions);
+            });
+        }
+
+        // Stores pending changes for each user
+        const pendingUserChanges = {};
+
+        function handlePermissionChange(event) {
+            const uid = event.target.dataset.uid;
+            const category = event.target.dataset.category;
+            const isAdminToggle = event.target.dataset.adminToggle;
+            const isChecked = event.target.checked;
+
+            if (!pendingUserChanges[uid]) {
+                // Initialize with current state from usersData
+                const currentUser = usersData.find(u => u.uid === uid);
+                pendingUserChanges[uid] = {
+                    allowedCategories: currentUser ? [...(currentUser.allowedCategories || [])] : [],
+                    isAdmin: currentUser ? currentUser.isAdmin : false
+                };
+            }
+
+            if (isAdminToggle) {
+                pendingUserChanges[uid].isAdmin = isChecked;
+            } else if (category) {
+                if (isChecked) {
+                    if (!pendingUserChanges[uid].allowedCategories.includes(category)) {
+                        pendingUserChanges[uid].allowedCategories.push(category);
+                    }
+                } else {
+                    pendingUserChanges[uid].allowedCategories = pendingUserChanges[uid].allowedCategories.filter(c => c !== category);
+                }
+            }
+            console.log("Pending changes for", uid, ":", pendingUserChanges[uid]);
+        }
+
+        async function savePermissions(event) {
+            const uid = event.target.dataset.uid;
+            const changes = pendingUserChanges[uid];
+
+            if (!changes) {
+                showMessage('info', 'No changes to save for this user.');
+                return;
+            }
+            if (!db) {
+                showMessage('error', 'Database not initialized.');
+                return;
+            }
+
+            try {
+                const userDocRef = doc(db, `artifacts/${appId}/public/data/user_permissions`, uid);
+                await setDoc(userDocRef, { 
+                    allowedCategories: changes.allowedCategories, 
+                    isAdmin: changes.isAdmin 
+                }, { merge: true }); // Use merge to only update specified fields
+
+                delete pendingUserChanges[uid]; // Clear pending changes after successful save
+                showMessage('success', `Permissions for user ${uid} saved successfully!`);
+                console.log(`Permissions for user ${uid} saved:`, changes);
+            } catch (error) {
+                console.error("Error saving permissions:", error);
+                showMessage('error', `Failed to save permissions for user ${uid}: ${error.message}`);
+            }
+        }
+
+        // --- Event Listeners and Initial Load ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize Firebase Auth and RBAC logic
+            initializeFirebaseAndAuth();
+
+            // Wait for authentication and permissions to be ready
+            document.addEventListener('authReady', (event) => {
+                const { userPermissions, isAdminUser } = event.detail;
+
+                // Check page access for Admin Panel
+                checkPageAccess(PAGE_CATEGORY);
+
+                // If access is granted, load sidebar and fetch users
+                const overlay = document.getElementById('accessDeniedOverlay');
+                if (!overlay || overlay.style.display !== 'flex') {
+                    loadSidebar(userPermissions, isAdminUser); 
+                    fetchAndDisplayUsers(); // Load all users when admin panel is accessed
+                }
+            });
+
+            // Attach event listener for Sign Out button
+            const signOutButton = document.getElementById('signOutBtn');
+            if (signOutButton) {
+                signOutButton.addEventListener('click', signOutUser);
+            }
+
+            // Attach event listener for Refresh and Search buttons
+            document.getElementById('refreshUsersBtn').addEventListener('click', () => {
+                fetchAndDisplayUsers(document.getElementById('filterUsersInput').value);
+            });
+            document.getElementById('searchUsersBtn').addEventListener('click', () => {
+                fetchAndDisplayUsers(document.getElementById('filterUsersInput').value);
+            });
+            document.getElementById('filterUsersInput').addEventListener('keyup', (event) => {
+                if (event.key === 'Enter') {
+                    fetchAndDisplayUsers(document.getElementById('filterUsersInput').value);
+                }
+            });
+        });
+    </script>
+</body>
+</html>

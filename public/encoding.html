@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Encoding</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            transition: all 0.3s ease-in-out;
+        }
+        .sidebar {
+            transition: width 0.3s ease-in-out, padding 0.3s ease-in-out;
+        }
+        .sidebar-hidden {
+            width: 0 !important;
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+            overflow: hidden;
+        }
+        .main-content {
+            transition: all 0.3s ease-in-out;
+            flex: 1;
+            overflow-y: auto;
+        }
+        .page-content {
+            width: 100%;
+            max-width: 1200px;
+            margin-left: auto;
+            margin-right: auto;
+            padding: 2rem;
+        }
+        /* Style for active tab */
+        .tab-button.active {
+            border-color: #4f46e5; /* indigo-600 */
+            color: #4f46e5; /* indigo-600 */
+            background-color: #e0e7ff; /* indigo-100 */
+        }
+        /* Custom message box styles */
+        .message-box {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #fff;
+            border-radius: 0.75rem; /* rounded-xl */
+            padding: 1.5rem; /* p-6 */
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); /* shadow-xl */
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            min-width: 300px;
+            max-width: 90%;
+        }
+        .message-box.success {
+            background-color: #d1fae5; /* green-100 */
+            border: 1px solid #34d399; /* green-400 */
+            color: #065f46; /* green-700 */
+        }
+        .message-box.error {
+            background-color: #fee2e2; /* red-100 */
+            border: 1px solid #f87171; /* red-400 */
+            color: #b91c1c; /* red-700 */
+        }
+        .message-box-close {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            cursor: pointer;
+            color: inherit;
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1rem;
+        }
+    </style>
+    <!-- Client-side check for authentication (kept as requested, but without imports) -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const accessToken = localStorage.getItem('supabase.auth.token'); 
+            const firebaseCustomToken = localStorage.getItem('firebase.custom.token');
+
+            if (!accessToken && !firebaseCustomToken) {
+                window.location.href = '/login.html';
+            }
+        });
+    </script>
+</head>
+<body class="bg-gray-100 flex h-screen">
+
+    <!-- Sidebar will be loaded here dynamically -->
+    <div id="sidebar-container"></div>
+
+    <!-- Main Content Area -->
+    <div id="main-content" class="main-content">
+        <!-- Main content is now inside this container which is centered by default -->
+        <div class="page-content">
+            <!-- Header with Toggle Button -->
+            <header class="flex items-center justify-between mb-8">
+                <button id="sidebar-toggle-btn" class="p-2 rounded-lg bg-gray-800 text-white hover:bg-gray-700 transition duration-200">
+                    <svg id="toggle-icon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                    </svg>
+                </button>
+                <h1 id="main-title" class="text-3xl font-extrabold text-gray-800">Encoding</h1>
+                
+                <!-- Sign Out Button -->
+                <button id="signOutBtn" class="flex items-center space-x-2 py-2 px-4 rounded-lg bg-red-600 text-white hover:bg-red-700 transition duration-200">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
+                    <span>Sign Out</span>
+                </button>
+
+            </header>
+            
+            <!-- Encoding Content -->
+            <div id="encoding-page" class="page">
+                <div class="bg-white p-6 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 mb-8">
+                    <h2 class="text-xl font-bold text-gray-700 mb-4">Encoding Tasks Overview</h2>
+                    <p class="text-gray-500">
+                        This section is for managing all your encoding tasks across different marketplaces.
+                    </p>
+                </div>
+
+                <!-- Tab buttons -->
+                <div class="flex border-b border-gray-300 mb-6">
+                    <button id="shopee-tab" class="tab-button active flex-1 py-3 px-4 text-gray-700 font-semibold border-b-2 border-transparent transition-colors duration-200 hover:text-indigo-600 hover:border-indigo-300">
+                        Shopee
+                    </button>
+                    <button id="tiktok-tab" class="tab-button flex-1 py-3 px-4 text-gray-700 font-semibold border-b-2 border-transparent transition-colors duration-200 hover:text-indigo-600 hover:border-indigo-300">
+                        TikTok
+                    </button>
+                    <button id="lazada-tab" class="tab-button flex-1 py-3 px-4 text-gray-700 font-semibold border-b-2 border-transparent transition-colors duration-200 hover:text-indigo-600 hover:border-indigo-300">
+                        Lazada
+                    </button>
+                </div>
+
+                <!-- Tab content container -->
+                <main id="tab-content">
+                    <!-- Shopee Section (Active by default) -->
+                    <div id="shopee-content" class="tab-content">
+                        <!-- Typing Section -->
+                        <div class="bg-white p-6 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 mb-8">
+                            <h2 class="text-xl font-bold text-gray-700 mb-4">Encode New Shopee Item</h2>
+                            <form id="shopee-form" class="space-y-4">
+                                <div class="form-grid">
+                                    <div>
+                                        <label for="shopeeCourier" class="block text-sm font-medium text-gray-700">Courier</label>
+                                        <input type="text" id="shopeeCourier" name="courier" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2" required>
+                                    </div>
+                                    <div>
+                                        <label for="shopeeQTY" class="block text-sm font-medium text-gray-700">QTY</label>
+                                        <input type="number" id="shopeeQTY" name="qty" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2" required>
+                                    </div>
+                                    <div>
+                                        <label for="shopeeDescription" class="block text-sm font-medium text-gray-700">Description</label>
+                                        <input type="text" id="shopeeDescription" name="description" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2" required>
+                                    </div>
+                                    <div>
+                                        <label for="shopeeOrderID" class="block text-sm font-medium text-gray-700">Order ID</label>
+                                        <input type="text" id="shopeeOrderID" name="order-id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2" required>
+                                    </div>
+                                    <div>
+                                        <label for="shopeeRemarks" class="block text-sm font-medium text-gray-700">Remarks</label>
+                                        <input type="text" id="shopeeRemarks" name="remarks" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2" required>
+                                    </div>
+                                </div>
+                                <button type="submit" class="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+                                    Add Item to Shopee
+                                </button>
+                            </form>
+                        </div>
+
+                        <!-- Encoded Items Table -->
+                        <div class="bg-white p-6 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300">
+                            <h2 class="text-xl font-bold text-gray-700 mb-4">Encoded Shopee Items (from Combined Sheet)</h2>
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <!-- Headers for the combined sheet's simplified view -->
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Courier</th>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">QTY</th>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order ID</th>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Remarks</th>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Marketplace</th>
+                                            <th scope="col" class="relative px-6 py-3">
+                                                <span class="sr-only">Actions</span>
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="shopeeEncodedItemsTableBody" class="bg-white divide-y divide-gray-200">
+                                        <!-- Table rows will be added here by JavaScript -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TikTok Section (Hidden by default) -->
+                    <div id="tiktok-content" class="tab-content hidden">
+                        <!-- Typing Section -->
+                        <div class="bg-white p-6 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 mb-8">
+                            <h2 class="text-xl font-bold text-gray-700 mb-4">Encode New TikTok Item</h2>
+                            <form id="tiktok-form" class="space-y-4">
+                                <div class="form-grid">
+                                    <div>
+                                        <label for="tiktokCourier" class="block text-sm font-medium text-gray-700">Courier</label>
+                                        <input type="text" id="tiktokCourier" name="courier" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2" required>
+                                    </div>
+                                    <div>
+                                        <label for="tiktokQTY" class="block text-sm font-medium text-gray-700">QTY</label>
+                                        <input type="number" id="tiktokQTY" name="qty" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2" required>
+                                    </div>
+                                    <div>
+                                        <label for="tiktokDescription" class="block text-sm font-medium text-gray-700">Description</label>
+                                        <input type="text" id="tiktokDescription" name="description" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2" required>
+                                    </div>
+                                    <div>
+                                        <label for="tiktokOrderID" class="block text-sm font-medium text-gray-700">Order ID</label>
+                                        <input type="text" id="tiktokOrderID" name="order-id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2" required>
+                                    </div>
+                                    <div>
+                                        <label for="tiktokRemarks" class="block text-sm font-medium text-gray-700">Remarks</label>
+                                        <input type="text" id="tiktokRemarks" name="remarks" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2" required>
+                                    </div>
+                                </div>
+                                <button type="submit" class="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+                                    Add Item to TikTok
+                                </button>
+                            </form>
+                        </div>
+                        <div class="bg-white p-6 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300">
+                            <h2 class="text-xl font-bold text-gray-700 mb-4">Encoded TikTok Items (from Combined Sheet)</h2>
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <!-- Headers for the combined sheet's simplified view -->
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Courier</th>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">QTY</th>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order ID</th>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Remarks</th>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Marketplace</th>
+                                            <th scope="col" class="relative px-6 py-3">
+                                                <span class="sr-only">Actions</span>
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tiktokEncodedItemsTableBody" class="bg-white divide-y divide-gray-200">
+                                        <!-- Table rows will be added here by JavaScript -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Lazada Section (Hidden by default) -->
+                    <div id="lazada-content" class="tab-content hidden">
+                        <!-- Typing Section -->
+                        <div class="bg-white p-6 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 mb-8">
+                            <h2 class="text-xl font-bold text-gray-700 mb-4">Encode New Lazada Item</h2>
+                            <form id="lazada-form" class="space-y-4">
+                                <div class="form-grid">
+                                    <div>
+                                        <label for="lazadaCourier" class="block text-sm font-medium text-gray-700">Courier</label>
+                                        <input type="text" id="lazadaCourier" name="courier" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2" required>
+                                    </div>
+                                    <div>
+                                        <label for="lazadaQTY" class="block text-sm font-medium text-gray-700">QTY</label>
+                                        <input type="number" id="lazadaQTY" name="qty" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2" required>
+                                    </div>
+                                    <div>
+                                        <label for="lazadaDescription" class="block text-sm font-medium text-gray-700">Description</label>
+                                        <input type="text" id="lazadaDescription" name="description" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2" required>
+                                    </div>
+                                    <div>
+                                        <label for="lazadaOrderID" class="block text-sm font-medium text-gray-700">Order ID</label>
+                                        <input type="text" id="lazadaOrderID" name="order-id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2" required>
+                                    </div>
+                                    <div>
+                                        <label for="lazadaRemarks" class="block text-sm font-medium text-gray-700">Remarks</label>
+                                        <input type="text" id="lazadaRemarks" name="remarks" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2" required>
+                                    </div>
+                                </div>
+                                <button type="submit" class="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+                                    Add Item to Lazada
+                                </button>
+                            </form>
+                        </div>
+                        <div class="bg-white p-6 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300">
+                            <h2 class="text-xl font-bold text-gray-700 mb-4">Encoded Lazada Items (from Combined Sheet)</h2>
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <!-- Headers for the combined sheet's simplified view -->
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Courier</th>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">QTY</th>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order ID</th>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Remarks</th>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Marketplace</th>
+                                            <th scope="col" class="relative px-6 py-3">
+                                                <span class="sr-only">Actions</span>
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="lazadaEncodedItemsTableBody" class="bg-white divide-y divide-gray-200">
+                                        <!-- Table rows will be added here by JavaScript -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </main>
+            </div>
+        </div>
+    </div>
+
+   <script type="module">
+        // TEMPORARY: Log the __app_id to the console
+        console.log("Canvas App ID:", typeof __app_id !== 'undefined' ? __app_id : 'default-app-id-not-found');
+
+        // ==== CORRECT IMPORTS ====
+        import { initializeFirebaseAndAuth, checkPageAccess, signOutUser, openDriveFolder, userId, userPermissions, isAdminUser } from '../js/auth-rbac.js';
+        import { loadSidebar } from '../js/sidebar-loader.js'; 
+        // =========================
+
+        const PAGE_CATEGORY = 'encoding'; 
+        const DRIVE_URL = 'https://drive.google.com/drive/folders/YOUR_ENCODING_DRIVE_FOLDER_ID'; // Replace with actual URL if applicable
+
+        // --- Utility Functions for Custom Messages ---
+        function showMessage(type, message) {
+            const existingMessageBox = document.querySelector('.message-box');
+            if (existingMessageBox) {
+                existingMessageBox.remove();
+            }
+
+            const messageBox = document.createElement('div');
+            // Tailwind classes for message box
+            messageBox.classList.add('message-box', 'fixed', 'top-4', 'right-4', 'p-4', 'rounded-lg', 'shadow-lg', 'text-white', 'z-50', 'flex', 'items-center', 'space-x-3');
+            
+            if (type === 'success') {
+                messageBox.classList.add('bg-green-500');
+            } else if (type === 'error') {
+                messageBox.classList.add('bg-red-500');
+            } else {
+                messageBox.classList.add('bg-gray-700'); // Default
+            }
+
+            messageBox.innerHTML = `
+                <strong class="font-bold">${type === 'success' ? 'Success!' : 'Error!'}</strong>
+                <span class="block sm:inline">${message}</span>
+                <button class="ml-auto text-white opacity-75 hover:opacity-100" onclick="this.parentElement.remove()">
+                    <svg class="fill-current h-4 w-4" role="button" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><title>Close</title><path d="M14.348 14.849a1.2 1.2 0 0 1-1.697 0L10 11.819l-2.651 3.029a1.2 1.2 0 1 1-1.697-1.697l2.758-3.15-2.759-3.15a1.2 1.2 0 1 1 1.697-1.697L10 8.183l2.651-3.03a1.2 1.2 0 1 1 1.697 1.697l-2.758 3.15 2.758 3.15a1.2 1.2 0 0 1 0 1.698z"/></svg>
+                </button>
+            `;
+            document.body.appendChild(messageBox);
+
+            setTimeout(() => {
+                if (messageBox.parentElement) {
+                    messageBox.remove();
+                }
+            }, 3000); // Message disappears after 3 seconds
+        }
+
+        // Helper to get Supabase token for authorization
+        function getAuthToken() {
+            const token = localStorage.getItem('supabase.auth.token');
+            return token ? `Bearer ${token}` : '';
+        }
+
+        // --- Backend API Functions (using Node.js Express routes) ---
+
+        // This function now sends all data to a single 'combined-submit' endpoint
+        async function submitEncodedItem(marketplace, item) {
+            const authToken = getAuthToken();
+            if (!authToken) {
+                showMessage('error', 'Authentication token missing. Please log in again.');
+                window.location.href = '/login.html'; // Redirect to login
+                return { success: false, message: 'Authentication required.' };
+            }
+
+            try {
+                // All submissions now go to a single combined endpoint
+                const response = await fetch(`/api/combined-submit`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': authToken // Include the auth token
+                    },
+                    // Add the marketplace to the item object before sending
+                    body: JSON.stringify({ ...item, marketplace: marketplace }), 
+                });
+
+                const result = await response.json();
+                if (!response.ok) {
+                    throw new Error(result.message || `Failed to submit data to ${marketplace}.`);
+                }
+                return { success: true, message: result.message || 'Item encoded successfully!' };
+            } catch (error) {
+                console.error(`Error submitting data to ${marketplace}:`, error);
+                return { success: false, message: error.message || 'Submission failed. Please try again.' };
+            }
+        }
+
+        // This function now fetches all data from a single 'combined-get-data' endpoint
+        async function getEncodedItems(marketplace) {
+            const authToken = getAuthToken();
+            if (!authToken) {
+                showMessage('error', 'Authentication token missing. Please log in again.');
+                window.location.href = '/login.html'; // Redirect to login
+                return { success: false, message: 'Authentication required.' };
+            }
+
+            try {
+                // Fetch data from the combined API endpoint
+                const response = await fetch(`/api/combined-get-data`, {
+                    headers: {
+                        'Authorization': authToken // Include the auth token
+                    }
+                });
+                const result = await response.json();
+                if (!response.ok) {
+                    throw new Error(result.message || `Failed to fetch data from combined sheet.`);
+                }
+
+                // Define the comprehensive headers as they appear in the spreadsheet
+                const comprehensiveHeaders = [
+                    "Date", "Courier", "QTY", "Description", "Order ID", "Remarks", "Marketplace"
+                ];
+
+                const rawData = result.data || [];
+                const rawFilteredData = rawData.filter(row => {
+                    if (!Array.isArray(row) || row.length === 0) {
+                        return false;
+                    }
+                    const isBlankRow = row.every(cell => 
+                        (typeof cell === 'string' && cell.trim() === '') || 
+                        cell === undefined || cell === null
+                    );
+                    if (isBlankRow) return false;
+
+                    const isMainHeaderRow = row.length === comprehensiveHeaders.length && 
+                                            row.every((cell, index) => cell === comprehensiveHeaders[index]);
+                    if (isMainHeaderRow) return false;
+
+                    const isDayHeaderRow = (row.length > 0 && 
+                                            (new Date(row[0]).toString() !== 'Invalid Date') &&
+                                            (row[0] && typeof row[0] === 'string' && row[0].includes(',')) && 
+                                            row.slice(1).every(cell => typeof cell === 'string' ? cell.trim() === '' : cell === undefined || cell === null));
+                    if (isDayHeaderRow) return false;
+                    
+                    const hasMeaningfulData = row.some(cell => 
+                        (typeof cell === 'string' && cell.trim() !== '') || 
+                        (typeof cell === 'number' && cell !== 0) || 
+                        (cell !== undefined && cell !== null && (typeof cell !== 'string' && typeof cell !== 'number')) 
+                    );
+                    return hasMeaningfulData;
+                });
+
+                const mappedData = rawFilteredData.map(row => ({
+                    date: row[0] || '',
+                    courier: row[1] || '',
+                    qty: parseInt(row[2]) || 0,
+                    description: row[3] || '',
+                    orderId: row[4] || '',
+                    remarks: row[5] || '',
+                    marketplace: row[6] || '',
+                }));
+
+                // Filter data to show only items for the currently active marketplace tab
+                const filteredData = mappedData.filter(item => item.marketplace.toLowerCase() === marketplace.toLowerCase());
+
+                return { success: true, data: filteredData };
+            } catch (error) {
+                console.error(`Error fetching data for ${marketplace} from combined sheet:`, error);
+                return { success: false, message: error.message || `Failed to fetch encoded items for ${marketplace}.` };
+            }
+        }
+
+        // --- Main Application Logic ---
+    
+        async function fetchAndRenderEncodedData(marketplace) {
+            const encodedItemsTableBody = document.getElementById(`${marketplace}EncodedItemsTableBody`);
+            if (!encodedItemsTableBody) return; 
+
+            encodedItemsTableBody.innerHTML = ''; 
+
+            try {
+                const result = await getEncodedItems(marketplace); 
+
+                if (result.success) {
+                    // Update TABLE HEADERS for all tables to reflect the new simplified headers
+                    const tableHeadRow = document.querySelector(`#${marketplace}-content table thead tr`);
+                    if (tableHeadRow) {
+                        tableHeadRow.innerHTML = `
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Courier</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">QTY</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order ID</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Remarks</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Marketplace</th>
+                            <th scope="col" class="relative px-6 py-3"><span class="sr-only">Actions</span></th>
+                        `;
+                    }
+
+                    result.data.forEach(item => {
+                        const newRow = encodedItemsTableBody.insertRow();
+                        newRow.classList.add('hover:bg-gray-100'); 
+
+                        const dateCell = newRow.insertCell();
+                        dateCell.classList.add('px-6', 'py-4', 'whitespace-nowrap', 'text-sm', 'text-gray-500');
+                        dateCell.textContent = item.date || 'N/A';
+                        
+                        const courierCell = newRow.insertCell();
+                        courierCell.classList.add('px-6', 'py-4', 'whitespace-nowrap', 'text-sm', 'font-medium', 'text-gray-900');
+                        courierCell.textContent = item.courier || 'N/A';
+
+                        const qtyCell = newRow.insertCell();
+                        qtyCell.classList.add('px-6', 'py-4', 'whitespace-nowrap', 'text-sm', 'text-gray-500');
+                        qtyCell.textContent = (typeof item.qty === 'number' && !isNaN(item.qty) ? item.qty : 'N/A');
+
+                        const descriptionCell = newRow.insertCell();
+                        descriptionCell.classList.add('px-6', 'py-4', 'whitespace-nowrap', 'text-sm', 'text-gray-500');
+                        descriptionCell.textContent = item.description || 'N/A';
+
+                        const orderIdCell = newRow.insertCell();
+                        orderIdCell.classList.add('px-6', 'py-4', 'whitespace-nowrap', 'text-sm', 'text-gray-500');
+                        orderIdCell.textContent = item.orderId || 'N/A';
+
+                        const remarksCell = newRow.insertCell();
+                        remarksCell.classList.add('px-6', 'py-4', 'whitespace-nowrap', 'text-sm', 'text-gray-500');
+                        remarksCell.textContent = item.remarks || 'N/A';
+
+                        const marketplaceCell = newRow.insertCell(); 
+                        marketplaceCell.classList.add('px-6', 'py-4', 'whitespace-nowrap', 'text-sm', 'font-semibold', 'text-indigo-600', 'capitalize');
+                        marketplaceCell.textContent = item.marketplace || 'N/A';
+
+                        const actionsCell = newRow.insertCell();
+                        actionsCell.classList.add('px-6', 'py-4', 'whitespace-nowrap', 'text-right', 'text-sm', 'font-medium');
+                    });
+                } else {
+                    showMessage('error', result.message || `Failed to fetch encoded items for ${marketplace}.`);
+                }
+            } catch (error) {
+                console.error(`Error fetching data for ${marketplace}:`, error);
+                showMessage('error', `An error occurred while fetching data for ${marketplace}. Check your internet connection.`);
+            }
+        }
+
+        // --- Main execution flow ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize Firebase Auth and RBAC logic FIRST
+            initializeFirebaseAndAuth();
+
+            // Wait for authentication and permissions to be ready
+            document.addEventListener('authReady', (event) => {
+                const { userPermissions, isAdminUser } = event.detail;
+
+                // 1. Check access for THIS page
+                checkPageAccess(PAGE_CATEGORY);
+
+                // 2. Load sidebar with permissions (this hides/shows nav links)
+                loadSidebar(userPermissions, isAdminUser).then(() => {
+                     // Get tab elements after sidebar is loaded and attached
+                    const tabs = document.querySelectorAll('.tab-button');
+                    const contents = document.querySelectorAll('.tab-content');
+                    const forms = document.querySelectorAll('.tab-content form'); 
+
+                    // Tab switching logic
+                    tabs.forEach(tab => {
+                        tab.addEventListener('click', () => {
+                            tabs.forEach(t => t.classList.remove('active'));
+                            contents.forEach(c => c.classList.add('hidden'));
+
+                            tab.classList.add('active');
+                            const contentId = tab.id.replace('-tab', '-content');
+                            const activeContent = document.getElementById(contentId);
+                            if (activeContent) {
+                                activeContent.classList.remove('hidden');
+                            }
+
+                            // Fetch and render data for the newly active tab
+                            const marketplace = tab.id.replace('-tab', '');
+                            fetchAndRenderEncodedData(marketplace);
+                        });
+                    });
+
+                    // Form submission logic for each marketplace
+                    forms.forEach(form => {
+                        form.addEventListener('submit', async (e) => {
+                            e.preventDefault();
+
+                            const marketplace = form.id.replace('-form', ''); 
+                            const formData = new FormData(form);
+                            const item = Object.fromEntries(formData.entries()); 
+
+                            if (item.courier && item.qty && item.description && item['order-id'] && item.remarks) {
+                                try {
+                                    const result = await submitEncodedItem(marketplace, item); 
+
+                                    if (result.success) {
+                                        showMessage('success', result.message);
+                                        form.reset(); 
+                                        await fetchAndRenderEncodedData(marketplace); 
+                                    } else {
+                                        showMessage('error', result.message || 'Submission failed. Please try again.');
+                                    }
+                                } catch (error) {
+                                    console.error('Error submitting data:', error);
+                                    showMessage('error', 'An error occurred. Check your internet connection.');
+                                }
+                            } else {
+                                showMessage('error', 'Please fill in all required fields.');
+                            }
+                        });
+                    });
+
+                    // Initial fetch and render for the default active tab (Shopee)
+                    // Only load data if access is granted (or if admin)
+                    const accessDeniedOverlay = document.getElementById('accessDeniedOverlay');
+                    if (!accessDeniedOverlay || accessDeniedOverlay.style.display !== 'flex') {
+                        fetchAndRenderEncodedData('shopee');
+                    }
+                }).catch(error => {
+                    console.error("Failed to load sidebar and initialize encoding page:", error);
+                });
+            });
+
+            // Attach event listener for Sign Out button
+            const signOutButton = document.getElementById('signOutBtn');
+            if (signOutButton) {
+                signOutButton.addEventListener('click', signOutUser);
+            }
+
+            // Attach event listener for Open Drive button (if applicable)
+            const openDriveButton = document.getElementById('openDriveBtn');
+            if (openDriveButton) {
+                openDriveButton.addEventListener('click', () => openDriveFolder(DRIVE_URL));
+            }
+        });
+    </script>
+</body>
+</html>

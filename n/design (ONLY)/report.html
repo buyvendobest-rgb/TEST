@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Sales Data Entry</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* General body and font */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f5f7fa; /* Very light gray background */
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            padding: 2.5rem; /* 40px padding */
+        }
+
+        /* Main form container */
+        .form-container {
+            background-color: white;
+            border-radius: 1rem; /* 16px border-radius */
+            box-shadow: 0 0.75rem 2rem rgba(0, 0, 0, 0.08); /* Stronger, softer shadow */
+            padding: 2.5rem; /* 40px padding */
+            max-width: 1000px; /* Wider form */
+            width: 100%;
+            border: 1px solid #e2e8f0; /* Light border */
+        }
+
+        /* Header sections */
+        .header-main {
+            background-image: linear-gradient(135deg, #1f4287, #2c5ba7); /* Deep blue gradient */
+            color: white;
+            padding: 1.5rem 2rem; /* 24px 32px */
+            margin: -2.5rem -2.5rem 2rem -2.5rem; /* Extends to container edges */
+            border-top-left-radius: 1rem;
+            border-top-right-radius: 1rem;
+            text-align: center;
+            font-size: 2.2em;
+            font-weight: 800; /* Extra bold */
+            letter-spacing: 0.05em;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .header-sub {
+            background-color: #3f68b3; /* Slightly lighter deep blue */
+            color: white;
+            padding: 0.75rem 1.25rem; /* 12px 20px */
+            margin-bottom: 2rem;
+            border-radius: 0.625rem; /* 10px radius */
+            text-align: center;
+            font-size: 1.4em;
+            font-weight: 600;
+        }
+
+        /* Input group sections - MODIFIED */
+        .input-section {
+            background-color: #fefeff; /* Slightly off-white background to emphasize distinct sections */
+            border: 1px solid #d9e2ec; /* Subtle blue-gray border */
+            border-left: 6px solid #4477cc; /* Prominent left border for visual separation */
+            border-radius: 0.75rem; /* 12px border-radius */
+            padding: 1.8rem; /* Increased padding for more breathing room */
+            margin-bottom: 2rem; /* Increased margin between sections */
+            box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.05); /* Slightly more prominent shadow */
+            transition: all 0.2s ease-in-out;
+        }
+
+        .input-section:hover {
+            box-shadow: 0 0.5rem 1.2rem rgba(0, 0, 0, 0.1); /* Stronger shadow on hover */
+        }
+
+        /* Input section titles - MODIFIED */
+        .input-section-title {
+            font-weight: 700;
+            color: #1f4287; /* Match header blue */
+            margin-bottom: 1.5rem; /* Increased margin below title */
+            font-size: 1.45em; /* Slightly larger font size */
+            text-align: left;
+            border-bottom: 2px solid #e0e9f1; /* Lighter underline */
+            padding-bottom: 0.75rem; /* Increased padding below underline */
+        }
+
+        /* Labels and inputs */
+        label {
+            display: block;
+            margin-bottom: 0.375rem; /* 6px */
+            color: #475569; /* Darker gray */
+            font-size: 0.95em;
+            font-weight: 500;
+        }
+
+        input[type="number"],
+        input[type="text"],
+        input[type="date"] {
+            width: 100%;
+            padding: 0.625rem 0.875rem; /* 10px 14px */
+            border: 1px solid #cdd8e4; /* Light blue-gray border */
+            border-radius: 0.5rem; /* 8px border-radius */
+            margin-bottom: 0.75rem; /* 12px */
+            box-sizing: border-box;
+            transition: all 0.2s ease-in-out;
+            background-color: #fcfdff; /* Off-white tint for input background */
+            font-size: 1em;
+            color: #2b3a4a;
+        }
+
+        input[type="number"]:focus,
+        input[type="text"]:focus,
+        input[type="date"]:focus {
+            outline: none;
+            border-color: #3f68b3; /* Accent blue on focus */
+            box-shadow: 0 0 0 3px rgba(63, 104, 179, 0.3); /* Softer focus ring */
+            background-color: white; /* White on focus */
+        }
+
+        /* Grid layouts using Tailwind classes */
+        .grid-layout {
+            display: grid;
+            gap: 1.5rem; /* 24px gap */
+        }
+        .grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        .grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+
+        /* Form footer */
+        .form-footer {
+            margin-top: 2.5rem; /* 40px */
+            padding-top: 1.5rem; /* 24px */
+            border-top: 1px solid #e0e9f1; /* Solid separator */
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1.25rem; /* 20px gap for wrap */
+        }
+
+        .total-display {
+            font-size: 1.5em;
+            font-weight: 700;
+            color: #1f4287; /* Deep blue */
+            display: flex;
+            align-items: center;
+            gap: 0.75rem; /* 12px */
+        }
+
+        .target-status {
+            font-weight: 600;
+            color: #64748b; /* Gray-600 */
+            display: flex;
+            align-items: center;
+            gap: 0.5rem; /* 8px */
+        }
+
+        .target-status .status-icon {
+            font-size: 1.7em;
+        }
+
+        .target-met-true {
+            color: #28a745; /* Bootstrap green */
+        }
+
+        .target-met-false {
+            color: #dc3545; /* Bootstrap red */
+        }
+
+        button {
+            background-color: #28a745; /* Bootstrap green button */
+            color: white;
+            padding: 0.875rem 1.75rem; /* 14px 28px */
+            border-radius: 0.625rem; /* 10px radius */
+            font-weight: 700;
+            cursor: pointer;
+            transition: background-color 0.25s ease-in-out, transform 0.1s ease-in-out, box-shadow 0.25s ease-in-out;
+            box-shadow: 0 0.3rem 0.8rem rgba(40, 167, 69, 0.3); /* Green shadow */
+            outline: none;
+            border: none; /* Remove default button border */
+        }
+
+        button:hover {
+            background-color: #218838; /* Darker green on hover */
+            transform: translateY(-0.1875rem); /* -3px */
+            box-shadow: 0 0.5rem 1rem rgba(40, 167, 69, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+            box-shadow: 0 0.25rem 0.6rem rgba(40, 167, 69, 0.2);
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+            .form-container {
+                padding: 1.5rem;
+            }
+            .header-main {
+                margin: -1.5rem -1.5rem 1.5rem -1.5rem;
+                font-size: 1.8em;
+                padding: 1.25rem;
+            }
+            .header-sub {
+                font-size: 1.2em;
+                margin-bottom: 1.5rem;
+            }
+            .input-section {
+                padding: 1rem;
+                margin-bottom: 1.5rem;
+            }
+            .input-section-title {
+                font-size: 1.2em;
+                margin-bottom: 0.75rem;
+            }
+            .grid-layout {
+                grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+                gap: 1rem;
+            }
+            .form-footer {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 1rem;
+            }
+            .total-display, .target-status {
+                justify-content: center;
+                font-size: 1.3em;
+            }
+            button {
+                width: 100%;
+                padding: 0.75rem 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="form-container">
+        <div class="header-main">
+            AUGUST PRODUCT SALES REPORT
+        </div>
+        <div class="header-sub">
+            DAILY SALES DATA ENTRY
+        </div>
+
+        <form id="salesForm">
+            <!-- Date Input -->
+            <div class="input-section">
+                <div class="input-section-title">General Details</div>
+                <div>
+                    <label for="inputDate">Date:</label>
+                    <input type="date" id="inputDate" class="rounded-lg">
+                </div>
+            </div>
+
+            <!-- Water Vendo Sales -->
+            <div class="input-section">
+                <div class="input-section-title">Water Vendo Sales</div>
+                <div class="grid-layout grid-cols-2 md:grid-cols-4">
+                    <div>
+                        <label for="eurobest">EUROBEST:</label>
+                        <input type="number" id="eurobest" value="0" min="0" class="product-input rounded-lg">
+                    </div>
+                    <div>
+                        <label for="tixx">TIXX:</label>
+                        <input type="number" id="tixx" value="0" min="0" class="product-input rounded-lg">
+                    </div>
+                    <div>
+                        <label for="bLoadTTop">B-LOAD/T-TOP:</label>
+                        <input type="number" id="bLoadTTop" value="0" min="0" class="product-input rounded-lg">
+                    </div>
+                    <div>
+                        <label for="excel">EXCEL:</label>
+                        <input type="number" id="excel" value="0" min="0" class="product-input rounded-lg">
+                    </div>
+                </div>
+            </div>
+
+            <!-- H&C / Carwash / Foam / Wash Sales -->
+            <div class="input-section">
+                <div class="input-section-title">Hot & Cold / Carwash / Foam / Wash Sales</div>
+                <div class="grid-layout grid-cols-2 md:grid-cols-4">
+                    <div>
+                        <label for="hcOnly">H&C:</label>
+                        <input type="number" id="hcOnly" value="0" min="0" class="product-input rounded-lg">
+                    </div>
+                    <div>
+                        <label for="cOnly">C ONLY:</label>
+                        <input type="number" id="cOnly" value="0" min="0" class="product-input rounded-lg">
+                    </div>
+                    <div>
+                        <label for="carwashSet">CARWASH SET:</label>
+                        <input type="number" id="carwashSet" value="0" min="0" class="product-input rounded-lg">
+                    </div>
+                    <div>
+                        <label for="carwashBox">CARWASH BOX:</label>
+                        <input type="number" id="carwashBox" value="0" min="0" class="product-input rounded-lg">
+                    </div>
+                    <div>
+                        <label for="foamFCW">FOAM (F CW):</label>
+                        <input type="number" id="foamFCW" value="0" min="0" class="product-input rounded-lg">
+                    </div>
+                    <div>
+                        <label for="washProduct">WASH:</label>
+                        <input type="number" id="washProduct" value="0" min="0" class="product-input rounded-lg">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charging Stations & Related -->
+            <div class="input-section">
+                <div class="input-section-title">Charging Stations & Related</div>
+                <div class="grid-layout grid-cols-2 md:grid-cols-4">
+                    <div>
+                        <label for="charge2">Charger (2 Ports):</label>
+                        <input type="number" id="charge2" value="0" min="0" class="product-input rounded-lg">
+                    </div>
+                    <div>
+                        <label for="charge4">Charger (4 Ports):</label>
+                        <input type="number" id="charge4" value="0" min="0" class="product-input rounded-lg">
+                    </div>
+                    <div>
+                        <label for="batt">BATT:</label>
+                        <input type="number" id="batt" value="0" min="0" class="product-input rounded-lg">
+                    </div>
+                    <div>
+                        <label for="ports">PORTS:</label>
+                        <input type="number" id="ports" value="0" min="0" class="product-input rounded-lg">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Vendo Products (Oil, 3N1, Coffee) -->
+            <div class="input-section">
+                <div class="input-section-title">Vendo Products (Oil, 3N1, Coffee)</div>
+                <div class="grid-layout grid-cols-2 md:grid-cols-4">
+                    <div>
+                        <label for="oil">OIL VENDO:</label>
+                        <input type="number" id="oil" value="0" min="0" class="product-input rounded-lg">
+                    </div>
+                    <div>
+                        <label for="dish">DISH:</label>
+                        <input type="number" id="dish" value="0" min="0" class="product-input rounded-lg">
+                    </div>
+                    <div>
+                        <label for="car">CAR:</label>
+                        <input type="number" id="car" value="0" min="0" class="product-input rounded-lg">
+                    </div>
+                    <div>
+                        <label for="soy">SOY:</label>
+                        <input type="number" id="soy" value="0" min="0" class="product-input rounded-lg">
+                    </div>
+                    <div>
+                        <label for="air">3N1 AIR:</label>
+                        <input type="number" id="air" value="0" min="0" class="product-input rounded-lg">
+                    </div>
+                    <div>
+                        <label for="mini">3N1 MINI:</label>
+                        <input type="number" id="mini" value="0" min="0" class="product-input rounded-lg">
+                    </div>
+                    <div>
+                        <label for="big">3N1 BIG:</label>
+                        <input type="number" id="big" value="0" min="0" class="product-input rounded-lg">
+                    </div>
+                    <div>
+                        <label for="vendoBox">VENDO BOX:</label>
+                        <input type="number" id="vendoBox" value="0" min="0" class="product-input rounded-lg">
+                    </div>
+                    <div>
+                        <label for="coffeeVendo">COFFEE VENDO:</label>
+                        <input type="number" id="coffeeVendo" value="0" min="0" class="product-input rounded-lg">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Targets & Returns -->
+            <div class="input-section">
+                <div class="input-section-title">Targets & Returns</div>
+                <div class="grid-layout grid-cols-2 md:grid-cols-3">
+                    <div>
+                        <label for="dailyTarget">Daily Target:</label>
+                        <input type="number" id="dailyTarget" value="6" min="0" class="rounded-lg">
+                    </div>
+                    <div>
+                        <label for="returnFailed">Return Failed:</label>
+                        <input type="number" id="returnFailed" value="0" min="0" class="rounded-lg">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Form Footer with Total and Status -->
+            <div class="form-footer">
+                <div class="total-display">
+                    TOTAL SALES: <span id="calculatedTotal">0</span>
+                </div>
+                <div class="target-status">
+                    Target Met: <span id="targetMetStatus" class="status-icon target-met-false">&#x2716;</span>
+                </div>
+                <button type="submit" class="rounded-lg">Save Daily Sales</button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        const productInputs = document.querySelectorAll('.product-input');
+        const calculatedTotal = document.getElementById('calculatedTotal');
+        const dailyTargetInput = document.getElementById('dailyTarget');
+        const targetMetStatus = document.getElementById('targetMetStatus');
+
+        // Function to update the total sales and check target status
+        function updateTotals() {
+            let total = 0;
+            productInputs.forEach(input => {
+                // Use Number() to ensure conversion, default to 0 for non-numbers
+                total += Number(input.value) || 0;
+            });
+            calculatedTotal.textContent = total;
+            checkTargetMet(total);
+        }
+
+        // Function to check if the daily target is met
+        function checkTargetMet(currentTotal) {
+            const dailyTarget = Number(dailyTargetInput.value) || 0;
+            // MODIFIED LOGIC: Target met if total is GREATER THAN OR EQUAL TO daily target
+            if (currentTotal >= dailyTarget) {
+                targetMetStatus.innerHTML = '&#x2714;'; // Checkmark
+                targetMetStatus.classList.remove('target-met-false');
+                targetMetStatus.classList.add('target-met-true');
+            } else {
+                targetMetStatus.innerHTML = '&#x2716;'; // X mark
+                targetMetStatus.classList.remove('target-met-true');
+                targetMetStatus.classList.add('target-met-false');
+            }
+        }
+
+        // Add event listeners to all relevant inputs for live updates
+        productInputs.forEach(input => {
+            input.addEventListener('input', updateTotals);
+        });
+        // Ensure changes to the daily target also update the status
+        dailyTargetInput.addEventListener('input', updateTotals);
+
+        // Set initial date to today's date when the page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            document.getElementById('inputDate').value = `${year}-${month}-${day}`;
+            updateTotals(); // Perform initial calculation and target check
+        });
+
+        // Prevent default form submission for design demonstration purposes
+        document.getElementById('salesForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            console.log('Form submission prevented for design demonstration.');
+            // In a real application, this is where you would handle data persistence
+            // (e.g., sending data to a backend, or using SheetJS to export to Excel).
+        });
+    </script>
+</body>
+</html>
